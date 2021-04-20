@@ -1,6 +1,22 @@
 'use strict';
 
+let queryParamDict = {
+  "duration": "d",
+  "preemptive": "preempt",
+  "powerMode": "power",
+  "onTime": "onTime",
+  "offTime": "offTime",
+  "startState": "startState",
+}
+
 let duration = 30;
+let preemptive = false;
+let powerOptions = {
+  mode: "periodic",
+  onTime: 5,
+  offTime: 2,
+  startState: true,
+}
 
 let taskFields = [
   "color",
@@ -65,7 +81,13 @@ let tasksToParam = () => {
  * Creates a query parameter string and reloads the page with new parameters
  */
 let reloadPageWithParams = () => {
-  let params = "d=" + encodeURIComponent(duration) + "&" + tasksToParam();
+  let params = `${queryParamDict["duration"]}=${encodeURIComponent(duration)}&`;
+  params += `${queryParamDict["preemptive"]}=${encodeURIComponent(preemptive)}&`;
+  params += `${queryParamDict["powerMode"]}=${encodeURIComponent(powerOptions.mode)}&`;
+  params += `${queryParamDict["onTime"]}=${encodeURIComponent(powerOptions.onTime)}&`;
+  params += `${queryParamDict["offTime"]}=${encodeURIComponent(powerOptions.offTime)}&`;
+  params += `${queryParamDict["startState"]}=${encodeURIComponent(powerOptions.startState)}&`;
+  params += tasksToParam()
   document.location.search = params;
 }
 
@@ -104,6 +126,33 @@ let deleteTask = (event) => {
   reloadPageWithParams();
 }
 
+let updatePowerForm = (event) => {
+  let powerMode = powerOptions.mode;
+  if (event) powerMode = event.target.value;
+  if (powerMode === "periodic") {
+    document.getElementById("on-time").removeAttribute("readonly");
+    document.getElementById("off-time").removeAttribute("readonly");
+  } else {
+    document.getElementById("on-time").setAttribute("readonly", "");
+    document.getElementById("off-time").setAttribute("readonly", "");
+  }
+}
+
+let updateSettings = (event) => {
+  event.preventDefault();
+
+  duration = document.getElementById("duration").value;
+
+  preemptive = document.getElementById("preemption").value === "preemptive";
+
+  powerOptions.mode = document.getElementById("power").value;
+  powerOptions.onTime = document.getElementById("on-time").value;
+  powerOptions.offTime = document.getElementById("off-time").value;
+  powerOptions.startState = document.getElementById("start-state").value === "on";
+
+  reloadPageWithParams();
+}
+
 /**
  * Creates a disabled color input element of a specified color
  * @param {String} color hex string for color
@@ -132,20 +181,35 @@ let isNumeric = (str) => {
         !isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
 }
 
-// get query parameters
+// get query params and use them to update values
 const urlParams = new URLSearchParams(window.location.search);
 
-if (urlParams.has("d")) duration = urlParams.get("d"); // only update duration if param exists
+if (urlParams.has(queryParamDict["duration"])) duration = parseInt(urlParams.get(queryParamDict["duration"])); // only update duration if param exists
+document.getElementById("duration").value = duration;
+
+if (urlParams.has(queryParamDict["preemption"])) preemptive = urlParams.get(queryParamDict["preemption"]) === "true";
+if (urlParams.has(queryParamDict["powerMode"])) powerOptions.mode = urlParams.get(queryParamDict["powerMode"]);
+if (urlParams.has(queryParamDict["onTime"])) powerOptions.onTime = parseInt(urlParams.get(queryParamDict["onTime"]));
+if (urlParams.has(queryParamDict["offTime"])) powerOptions.offTime = parseInt(urlParams.get(queryParamDict["offTime"]));
+if (urlParams.has(queryParamDict["startState"])) powerOptions.startState = urlParams.get(queryParamDict["startState"]) === "true";
+document.getElementById("preemption").value = preemptive ? "preemptive" : "nonpreemptive";
+document.getElementById("power").value = powerOptions.mode;
+document.getElementById("on-time").value = powerOptions.onTime;
+document.getElementById("off-time").value = powerOptions.offTime;
+document.getElementById("start-state").value = powerOptions.startState ? "on" : "off";
+updatePowerForm(null);
+
+console.log(powerOptions);
 
 urlParams.sort(); // sort so we push tasks in the correct order
 let newTasks = [];
 urlParams.forEach((value, key) => {
   if (isNumeric(key)) { // only parse numeric keys as tasks
     let values = value.split(",");
-    let newTasks = {};
+    let newTask = {};
     // TODO error check for values length
     for (let i = 0; i < Math.min(taskFields.length, values.length); i++) {
-      newTasks[taskFields[i]] = values[i];
+      newTask[taskFields[i]] = values[i];
     }
     newTasks.push(newTask);
   }
@@ -187,7 +251,7 @@ let chartConstantEdf = realTimeChart()
     })
     .scheduleOptions({
       mode: 'edf',
-      preemptive: false,
+      preemptive: preemptive,
     })
     ;
 
@@ -200,15 +264,10 @@ let chartInterEdf = realTimeChart()
     .height(250)
     .duration(duration)
     .tasks(tasks)
-    .powerOptions({
-      mode: 'periodic',
-      onTime: 5,
-      offTime: 2,
-      startState: true,
-    })
+    .powerOptions(powerOptions)
     .scheduleOptions({
       mode: 'edf',
-      preemptive: false,
+      preemptive: preemptive,
     })
     ;
 
@@ -221,15 +280,10 @@ let chartInterOptimal = realTimeChart()
     .height(250)
     .duration(duration)
     .tasks(tasks)
-    .powerOptions({
-      mode: 'periodic',
-      onTime: 5,
-      offTime: 2,
-      startState: true,
-    })
+    .powerOptions(powerOptions)
     .scheduleOptions({
       mode: 'optimal',
-      preemptive: false,
+      preemptive: preemptive,
     })
     ;
 
@@ -248,3 +302,7 @@ d3.select("#inter-optimal").append("div")
   .call(chartInterOptimal);
 
 document.getElementById("task-form").onsubmit = addNewTask;
+
+document.getElementById("settings-form").onsubmit = updateSettings;
+
+document.getElementById("power").onchange = updatePowerForm;

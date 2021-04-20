@@ -298,7 +298,7 @@ function realTimeChart() {
     if (powerOptions.mode === 'periodic') {
       powerSchedule = generatePowerSchedulePeriodic(duration, powerOptions.onTime, powerOptions.offTime, powerOptions.startState);
     } else if (powerOptions.mode === 'random') {
-      powerOptions = generatePowerScheduleRandom(duration, powerOptions.startState);
+      powerSchedule = generatePowerScheduleRandom(duration, powerOptions.startState);
     } else {
       powerSchedule = generatePowerScheduleConstant(duration);
     }
@@ -359,7 +359,7 @@ function realTimeChart() {
       jobsSel
           .attr("x", function(d) { return x(d.start); })
           .attr("y", height - height/categories.length + 20)
-          .attr("width", function(d) { return x(d.start + d.executionTime) - x(d.start); })
+          .attr("width", function(d) { return x(d.start + d.executionTime - d.start); })
           .attr("height", height/categories.length)
           .attr("stroke", 'black')
           .style("fill", function(d) { 
@@ -391,7 +391,7 @@ function realTimeChart() {
       powerSel
         .attr("x", function(d) { return x(d.start); })
         .attr("y", 20)
-        .attr("width", function(d) { return x(d.end) - x(d.start); })
+        .attr("width", function(d) { return x(d.end - d.start); })
         .attr("height", height/categories.length-20)
         .style("fill", "orange")
         .style("fill-opacity", function(d) { return d.state ? 1 : 0; })

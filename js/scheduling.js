@@ -41,7 +41,7 @@ let generatePowerSchedulePeriodic = (duration, onTime, offTime, startState = tru
     if (i % (onTime + offTime) === 0) { // on period
       // update end time of latest state
       if(result.length > 0) {
-        result[result.length-1]['end'] = i;
+        result[result.length-1]['end'] = i-shift;
       }
       
       result.push({
@@ -51,7 +51,7 @@ let generatePowerSchedulePeriodic = (duration, onTime, offTime, startState = tru
     } else if ((i - onTime) % (onTime + offTime) === 0) { // off period
       // update end time of latest state
       if(result.length > 0) {
-        result[result.length-1]['end'] = i;
+        result[result.length-1]['end'] = i-shift;
       }
 
       result.push({
@@ -65,6 +65,8 @@ let generatePowerSchedulePeriodic = (duration, onTime, offTime, startState = tru
   if(result.length > 0) {
     result[result.length-1]['end'] = duration;
   }
+
+  console.log(result);
 
   return result;
 }
@@ -80,8 +82,8 @@ let generatePowerScheduleRandom = (duration, startState = true) => {
   let lastState = startState;
   result.push({
     'state': lastState, 
-    'start': 0}
-  );
+    'start': 0
+  });
   for (let i = 1; i < duration; i++) {
     if (Math.random() < 0.5) {
       if(result.length > 0) {
