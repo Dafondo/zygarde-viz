@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js" integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf" crossorigin="anonymous"></script>
+    <link rel="stylesheet" type="text/css" href="css/index.css">
+  </head>
+  <body>
+    <main>
+      <div class="container">
+        <h1>EDF vs Optimal Scheduling</h1>
+        <div class="row mb-5">
+          <div class="col-3 mt-5">
+            <div class="accordion" id="accordionExample">
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOne">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                    Add new task
+                  </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+                  <div class="accordion-body">
+                    <form id="task-form">
+                      <div class="mb-2">
+                        <label class="form-label" for="color">Color</label>
+                        <input class="form-control form-control-color" type="color" name="color" id="color" required>
+                      </div>
+                      <div class="mb-2">
+                        <label class="form-label" for="period">Period</label>
+                        <input class="form-control" type="number" name="period" id="period" min="1" step="1" required>
+                      </div>
+                      <div class="mb-2">
+                        <label class="form-label" for="deadline">Deadline</label>
+                        <input class="form-control" type="number" name="deadline" id="deadline" min="1" step="1" required>
+                      </div>
+                      <div class="mb-2">
+                        <label class="form-label" for="first-release">First Release</label>
+                        <input class="form-control" type="number" name="first-release" id="first-release" min="1" step="1" required>
+                      </div>
+                      <div class="mb-2">
+                        <label class="form-label" for="mandatory-time">Mandatory execution time</label>
+                        <input class="form-control" type="number" name="mandatory-time" id="mandatory-time" min="0" step="1" required>
+                      </div>
+                      <div class="mb-2">
+                        <label class="form-label" for="optional-time">Optional execution time</label>
+                        <input class="form-control" type="number" name="optional-time" id="optional-time" min="0" step="1" required>
+                      </div>
+                      <div class="mb-2">
+                        <label class="form-label" for="credit">Credit for optional execution</label>
+                        <input class="form-control" type="number" name="credit" id="credit" min="0" required>
+                      </div>
+                      <button type="submit" class="btn btn-primary">Add Task</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-9">
+            <table class="w-100" id="task-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Color</th>
+                  <th>Period</th>
+                  <th>Deadline</th>
+                  <th>First release</th>
+                  <th>Mandatory time</th>
+                  <th>Optional time</th>
+                  <th>Optional credit</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="schedules" align="center">
+          <div id="defs" style="height: 0;"></div>
+          <div id="constant-edf"></div>
+          <div id="inter-edf"></div>
+          <div id="inter-optimal"></div>
+        </div>
+      </div>
+    </main>
+    <script src="js/scheduling.js"></script>
+    <script src="js/defs.js"></script>
+    <script src="js/realTimeChart.js"></script>
+    <script src="js/index.js"></script>
+  </body>
+</html>
