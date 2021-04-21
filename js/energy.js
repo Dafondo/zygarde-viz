@@ -262,3 +262,8 @@ function createEnergyCharts(filename, row) {
   // handle error   
   })
 }
+
+document.getElementById("dataset").onchange = (event) => {
+  let value = event.target.value.split("*");
+  createEnergyCharts(value[0], value[1]);
+}

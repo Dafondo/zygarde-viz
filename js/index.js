@@ -121,7 +121,7 @@ let deleteTask = (event) => {
   let td = event.target.parentNode;
   let tr = td.parentNode;
   let index = Array.from(tr.parentNode.children).indexOf(tr);
-  tasks.splice(index-1, 1);
+  tasks.splice(index, 1);
 
   reloadPageWithParams();
 }
@@ -317,8 +317,3 @@ document.getElementById("task-form").onsubmit = addNewTask;
 document.getElementById("settings-form").onsubmit = updateSettings;
 
 document.getElementById("power").onchange = updatePowerForm;
-
-document.getElementById("dataset").onchange = (event) => {
-  let value = event.target.value.split("*");
-  createEnergyCharts(value[0], value[1]);
-}
