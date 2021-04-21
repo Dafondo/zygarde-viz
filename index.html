@@ -148,7 +148,19 @@
           <div id="inter-optimal" class="border-top schedule-chart"></div>
         </div>
         <div class="row mt-5 mb-2">
-          <h1>Energy Threshold</h1>
+          <div class=col>
+            <h1>Energy Threshold</h1>
+          </div>
+          <div class=col>
+            <label class="form-label" for="dataset">Data set</label>
+            <select class="form-select" id="dataset" aria-label="Dataset select">
+              <option value="data/Meyer_2016.csv*0" selected>Footsteps 1</option>
+              <option value="data/Meyer_2016.csv*10">Footsteps 2</option>
+            </select>
+          </div>
+        </div>
+        <div class="row mb-2">
+          
         </div>
         <div class="row">
           <div class="col-6" id="energy-chart"></div>
@@ -163,7 +175,7 @@
     <script src="js/defs.js"></script>
     <script src="js/realTimeChart.js"></script>
     <script src="js/energyChart.js"></script>
-    <script src="js/index.js"></script>
     <script src="js/energy.js"></script>
+    <script src="js/index.js"></script>
   </body>
 </html>

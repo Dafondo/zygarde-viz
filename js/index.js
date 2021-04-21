@@ -317,3 +317,8 @@ document.getElementById("task-form").onsubmit = addNewTask;
 document.getElementById("settings-form").onsubmit = updateSettings;
 
 document.getElementById("power").onchange = updatePowerForm;
+
+document.getElementById("dataset").onchange = (event) => {
+  let value = event.target.value.split("*");
+  createEnergyCharts(value[0], value[1]);
+}
