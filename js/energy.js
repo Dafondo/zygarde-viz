@@ -1,6 +1,8 @@
 'use strict';
 
-d3.csv("data/Meyer_2016.csv")
+let filename = "data/Meyer_2016.csv"
+
+d3.csv(filename)
 .then(function(data) {
   // set the dimensions and margins of the graph
   // let margin = {top: 10, right: 30, bottom: 30, left: 60},
@@ -42,6 +44,10 @@ d3.csv("data/Meyer_2016.csv")
     return (1 - math.erf((mean - x ) / (Math.sqrt(2) * sd))) / 2
   }
 
+  let getSum = (array) => array.reduce(function (accumulator, currentValue) {
+    return accumulator + currentValue
+  }, 0);
+
   function normalcdf(to, mean, sigma) 
   {
     var z = (to-mean)/Math.sqrt(2*sigma*sigma);
@@ -58,6 +64,76 @@ d3.csv("data/Meyer_2016.csv")
         sign = -1;
     }
     return (1/2)*(1+sign*erf);
+  }
+
+  let klDivergence = (p, q) => {
+    // Convex combination smoothing to remove zeros
+    let up = 1/p.length/2;
+    let uq = 1/q.length/2;
+    
+
+    for (let i = 0; i < p.length ; i++) {
+      p[i] = p[i]/2 + up;
+      q[i] = q[i]/2 + uq;
+    }
+
+    // console.log(q);
+    // console.log(p);
+
+    // let sumq = getSum(q);
+
+    // let sump = getSum(p);
+
+    // for (let i = 0; i < q.length ; i++) {
+    //   q[i] /= sumq;
+    //   p[i] /= sump;
+    // }
+
+    // q[q.length-1] += 1 - getSum(q);
+
+    // p[p.length-1] += 1 - getSum(p);
+
+    // console.log(q);
+    // console.log(p);
+
+
+
+    // let meanq = getMean(q);
+    // let meanp = getMean(p);
+
+    // let sdq = getStandardDeviation(q);
+    // let sdp = getStandardDeviation(p);
+
+    // let cdfq = [];
+    // let cdfp = [];
+
+    // for (let i = 0; i < q.length ; i++) {
+    //   cdfq.push(cdfNormal(q[i], meanq, sdq));
+    //   cdfp.push(cdfNormal(p[i], meanp, sdp));
+    // }
+
+    // console.log(cdfq);
+    // console.log(cdfp);
+
+    // let pdfq = [];
+    // let pdfp = [];
+
+    // for (let i = cdfq.length-1; i > 0 ; i--) {
+    //   pdfq.push(cdfq[i] - cdfq[i-1]);
+    //   pdfp.push(cdfp[i] - cdfp[i-1]);
+    // }
+
+    // pdfq.push(cdfq[0]);
+    // pdfp.push(cdfp[0]);
+
+    // console.log(pdfq.reduce(function (accumulator, currentValue) {
+    //   return accumulator + currentValue
+    // }, 0));
+    // console.log(pdfp.reduce(function (accumulator, currentValue) {
+    //   return accumulator + currentValue
+    // }, 0));
+
+    return math.kldivergence(p, q);
   }
 
   let graphHN = () => {
@@ -132,72 +208,31 @@ d3.csv("data/Meyer_2016.csv")
         x: parseInt(key),
         y: p,
       });
-      hNCompare.push(p);
     }
 
-    console.log(ideal);
-    console.log(hNCompare);
+    // Sort hN and create hNCompare for calculating eta
+    hN = hN.sort((a, b) => {
+      return d3.ascending(a.x, b.x);
+    });
 
-    let sumIdeal = ideal.reduce(function (accumulator, currentValue) {
-      return accumulator + currentValue
-    }, 0);
+    hN.forEach((entry) => {
+      hNCompare.push(entry.y);
+    })
 
-    let sumHN = hNCompare.reduce(function (accumulator, currentValue) {
-      return accumulator + currentValue
-    }, 0);
-
-    for (let i = 0; i < ideal.length ; i++) {
-      ideal[i] /= sumIdeal;
-      hNCompare[i] /= sumHN;
+    // Generate random harvesting pattern for calculating eta
+    let randomPattern = [];
+    for (let i = 0; i < ideal.length; i++) {
+      randomPattern.push(Math.random())
     }
 
-    ideal[ideal.length-1] += 1 - ideal.reduce(function (accumulator, currentValue) {
-      return accumulator + currentValue
-    }, 0);
+    let numer = klDivergence(hNCompare, ideal);
+    let denom = klDivergence(ideal, randomPattern);
+    let eta = 1-numer/denom;
+    // console.log(numer);
+    // console.log(denom);
+    // console.log(eta);
 
-    hNCompare[hNCompare.length-1] += 1 - hNCompare.reduce(function (accumulator, currentValue) {
-      return accumulator + currentValue
-    }, 0);
-
-    console.log(ideal);
-    console.log(hNCompare);
-
-    // let meanIdeal = getMean(ideal);
-    // let meanHN = getMean(hNCompare);
-
-    // let sdIdeal = getStandardDeviation(ideal);
-    // let sdHN = getStandardDeviation(hNCompare);
-
-    // let cdfIdeal = [];
-    // let cdfHN = [];
-
-    // for (let i = 0; i < ideal.length ; i++) {
-    //   cdfIdeal.push(cdfNormal(ideal[i], meanIdeal, sdIdeal));
-    //   cdfHN.push(cdfNormal(hNCompare[i], meanHN, sdHN));
-    // }
-
-    // console.log(cdfIdeal);
-    // console.log(cdfHN);
-
-    // let pdfIdeal = [];
-    // let pdfHN = [];
-
-    // for (let i = cdfIdeal.length-1; i > 0 ; i--) {
-    //   pdfIdeal.push(cdfIdeal[i] - cdfIdeal[i-1]);
-    //   pdfHN.push(cdfHN[i] - cdfHN[i-1]);
-    // }
-
-    // pdfIdeal.push(cdfIdeal[0]);
-    // pdfHN.push(cdfHN[0]);
-
-    // console.log(pdfIdeal.reduce(function (accumulator, currentValue) {
-    //   return accumulator + currentValue
-    // }, 0));
-    // console.log(pdfHN.reduce(function (accumulator, currentValue) {
-    //   return accumulator + currentValue
-    // }, 0));
-
-    console.log(math.kldivergence(ideal, hNCompare));
+    document.getElementById("eta").innerText = "eta = " + eta;
 
     graphHN();
   }
@@ -216,7 +251,7 @@ d3.csv("data/Meyer_2016.csv")
 
   d3.select("#energy-chart").append("div")
     .attr("id", "chart-energy-threshold")
-    .call(thresholdChart);  
+    .call(thresholdChart);
 })
 .catch(function(error){
  // handle error   

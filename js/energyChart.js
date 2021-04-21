@@ -62,6 +62,18 @@ function energyChart() {
       .attr("height", height)
       .style("fill", "#f5f5f5");
 
+    // in main group, add chart title
+    main.append("text")
+      .attr("class", "chartTitle")
+      .attr("x", width / 2)
+      .attr("y", -margin.top) // TODO standardize this spacing
+      .attr("dy", ".71em")
+      .attr("text-anchor", "middle")
+      .text(function(d) { 
+        var text = chartTitle == undefined ? "" : chartTitle;
+        return text; 
+      });
+
     let x = d3.scaleLinear()
     .domain(d3.extent(data, (d) => {
       return d.x;
@@ -82,23 +94,27 @@ function energyChart() {
       .call(d3.axisLeft(y));
 
     // in x axis group, add x axis title
-    xAxisG.append("text")
+    main.append("text")
+      .attr("id", "x-title")
       .attr("class", "title")
       .attr("x", width / 2)
-      .attr("y", 25)
+      .attr("y", height + xTitleDim) // TODO standardize this spacing
       .attr("dy", ".71em")
+      .attr("text-anchor", "middle")
       .text(function(d) { 
         var text = xTitle == undefined ? "" : xTitle;
         return text; 
       });
 
     // in y axis group, add y axis title
-    yAxisG.append("text")
+    main.append("text")
+      .attr("id", "y-title")
       .attr("class", "title")
       .attr("transform", "rotate(-90)")
-      .attr("x", - height / 2)
-      .attr("y", -35)
+      .attr("x", -height / 2)
+      .attr("y", -margin.left ) // TODO standardize this spacing
       .attr("dy", ".71em")
+      .attr("text-anchor", "middle")
       .text(function(d) { 
         var text = yTitle == undefined ? "" : yTitle;
         return text; 
@@ -142,18 +158,6 @@ function energyChart() {
           })
         )
     }
-    
-    // in main group, add chart title
-    main.append("text")
-      .attr("class", "chartTitle")
-      .attr("x", width / 2)
-      .attr("y", -20)
-      .attr("dy", ".71em")
-      .attr("text-anchor", "middle")
-      .text(function(d) { 
-        var text = chartTitle == undefined ? "" : chartTitle;
-        return text; 
-      });
 
     if (hasThreshold) {
       // For the next three functions we use the function keyword 
@@ -197,6 +201,8 @@ function energyChart() {
         .attr("stroke", "red");
 
       line.call(drag);
+
+      computeActivation(y, lineCoords);
     }
 
     return chart;

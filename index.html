@@ -96,13 +96,15 @@
                       <div class="mb-2">
                         <label class="form-label" for="duration">Duration</label>
                         <input class="form-control" type="number" name="duration" id="duration" min="1" required>
+                        <div id="duration-help" class="form-text">Duration is the total amount of time to schedule for</div>
                       </div>
                       <div class="mb-2">
-                        <label class="form-label" for="preemption">Allow preemption</label>
+                        <label class="form-label" for="preemption">Preemption Mode</label>
                         <select class="form-select" id="preemption" aria-label="Preemptive select">
                           <option value="preemptive">Preemptive</option>
                           <option value="nonpreemptive" selected>Non-preemptive</option>
                         </select>
+                        <div id="preemption-help" class="form-text">If preemptive is chosen, a task can be interrupted by another one before it finishes executing</div>
                       </div>
                       <div class="mb-2">
                         <label class="form-label" for="power">Power intermittency</label>
@@ -116,16 +118,19 @@
                           <div class="mb-2">
                             <label class="form-label" for="on-time">On time</label>
                             <input class="form-control" type="number" name="on-time" id="on-time" min="0">
+                            <div id="on-time-help" class="form-text">On time for periodic power intermittency is the amount of time the device has power every period</div>
                           </div>
                           <div class="mb-2">
                             <label class="form-label" for="off-time">On time</label>
                             <input class="form-control" type="number" name="off-time" id="off-time" min="0">
+                            <div id="off-time-help" class="form-text">Off time for periodic power intermittency is the amount of time the device does not have power every period</div>
                           </div>
                           <label class="form-label" for="start-state">Start state</label>
                           <select class="form-select" id="start-state" aria-label="Start state select">
                             <option value="on" selected>On</option>
                             <option value="off">Off</option>
                           </select>
+                          <div id="start-state-help" class="form-text">Start state is the initial power state of the system</div>
                         </div>
                       </div>
                       <button type="submit" class="btn btn-primary">Save</button>
@@ -149,8 +154,9 @@
           <div class="col-6" id="energy-chart"></div>
           <div class="col-6" id="hn-chart"></div>
         </div>
-        <br>
-        <br>
+        <div class="row">
+          <p id="eta"></p>
+        </div>
       </div>
     </main>
     <script src="js/scheduling.js"></script>

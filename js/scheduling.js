@@ -66,8 +66,6 @@ let generatePowerSchedulePeriodic = (duration, onTime, offTime, startState = tru
     result[result.length-1]['end'] = duration;
   }
 
-  console.log(result);
-
   return result;
 }
 
@@ -114,8 +112,6 @@ let generatePowerScheduleRandom = (duration, startState = true) => {
  */
 let calculateScheduleEdf = (tasks, duration, powerSchedule, preemptive = true) => {
   let schedule = [];
-  let releases = [];
-  let deadlines = [];
   let runQueue = [];
   let power = powerSchedule[0];
   let powerIndex = 0;
@@ -133,23 +129,14 @@ let calculateScheduleEdf = (tasks, duration, powerSchedule, preemptive = true) =
       task = tasks[j];
       // add newly released jobs to the queue
       if (i >= task['firstRelease'] && (i - task['firstRelease']) % task['period'] === 0) {
-        let newDeadline = i + task['deadline'];
+        let newDeadline = i + parseInt(task['deadline']);
         runQueue.push({
           'id': j,
           'mandatoryTime': task['mandatoryTime'],
           'optionalTime': task['optionalTime'],
+          'release': i,
           'deadline': newDeadline,
         });
-
-        // add release and deadline for new jobs
-        releases.push({
-          'id': j,
-          'time': i,
-        });
-        deadlines.push({
-          'id': j,
-          'time': newDeadline,
-        })
       }
     }
 
@@ -183,6 +170,7 @@ let calculateScheduleEdf = (tasks, duration, powerSchedule, preemptive = true) =
 
         newExecution = {
           id: chosenJob['id'],
+          release: chosenJob['release'],
           deadline: chosenJob['deadline'],
           executionTime: 0,
           start: i,
@@ -206,29 +194,32 @@ let calculateScheduleEdf = (tasks, duration, powerSchedule, preemptive = true) =
       runQueue.splice(chosenJobIndex, chosenJobIndex+1);
       schedule.push(newExecution);
       
-      // find and update corresponding deadline
+      // update deadline status
       newStatus = newExecution['start'] + newExecution['executionTime'] <= newExecution['deadline'] ? deadlineStatus[0] : deadlineStatus[1];
-      let foundIndex = deadlines.findIndex(d => d.time === newExecution['deadline']);
-      deadlines[foundIndex]['status'] = newStatus;
+      // let foundIndex = deadlines.findIndex(d => d.time === newExecution['deadline']);
+      // deadlines[foundIndex]['status'] = newStatus;
+      newExecution['status'] = newStatus
 
       chosenJob = null;
       newExecution = {
         id: 0,
+        release: 0,
         deadline: 0,
         executionTime: 0,
         start: 0,
       }
     } else if (i === duration-1 || (power['state'] && power['end'] === i+1)) { // if power loss or end of duration, push execution
-      if (i === duration-1) { // find and update corresponding deadline
+      if (i === duration-1) { 
+        // update deadline status
         newStatus = newExecution['start'] + newExecution['executionTime'] <= newExecution['deadline'] ? deadlineStatus[0] : deadlineStatus[1];
-        let foundIndex = deadlines.findIndex(d => d.time === newExecution['deadline']);
-        if (!deadlines[foundIndex].hasOwnProperty('status')) {
-          deadlines[foundIndex]['status'] = newStatus;
-        }
+        // let foundIndex = deadlines.findIndex(d => d.time === newExecution['deadline']);
+        // deadlines[foundIndex]['status'] = newStatus;
+        newExecution['status'] = newStatus
       }
       schedule.push(newExecution);
       newExecution = {
         id: chosenJob['id'],
+        release: chosenJob['release'],
         deadline: chosenJob['deadline'],
         executionTime: 0,
         start: -1,
@@ -236,13 +227,11 @@ let calculateScheduleEdf = (tasks, duration, powerSchedule, preemptive = true) =
     }
   }
 
-  return {'tasks': schedule, 'releases': releases, 'deadlines': deadlines };
+  return schedule;
 }
 
 let calculateScheduleOptimal = (tasks, duration, powerSchedule, preemptive = true) => {
   let schedule = [];
-  let releases = [];
-  let deadlines = [];
   let runQueuePriority = [];
   let runQueue = [];
   let power = powerSchedule[0];
@@ -262,11 +251,12 @@ let calculateScheduleOptimal = (tasks, duration, powerSchedule, preemptive = tru
       task = tasks[j];
       // add newly released jobs to the queue
       if (i >= task['firstRelease'] && (i - task['firstRelease']) % task['period'] === 0) {
-        let newDeadline = i + task['deadline'];
+        let newDeadline = i + parseInt(task['deadline']);
         let newJob = {
           'id': j,
           'mandatoryTime': task['mandatoryTime'],
           'optionalTime': task['optionalTime'],
+          'release': i,
           'deadline': newDeadline,
         }
 
@@ -275,16 +265,6 @@ let calculateScheduleOptimal = (tasks, duration, powerSchedule, preemptive = tru
         } else {
           runQueue.push(newJob);
         }
-        
-        // add release and deadline for new jobs
-        releases.push({
-          'id': j,
-          'time': i,
-        });
-        deadlines.push({
-          'id': j,
-          'time': newDeadline,
-        })
       }
     }
 
@@ -332,6 +312,7 @@ let calculateScheduleOptimal = (tasks, duration, powerSchedule, preemptive = tru
 
         newExecution = {
           id: chosenJob['id'],
+          release: chosenJob['release'],
           deadline: chosenJob['deadline'],
           executionTime: 0,
           start: i,
@@ -354,13 +335,14 @@ let calculateScheduleOptimal = (tasks, duration, powerSchedule, preemptive = tru
     
     // if job was chosen from mandatory queue, but has no mandatory time left, remove it
     if (chosenFromPriority && chosenJob['mandatoryTime'] <= 0) {
+      // update deadline status
+      newStatus = newExecution['start'] + newExecution['executionTime'] <= newExecution['deadline'] ? deadlineStatus[0] : deadlineStatus[1];
+      // let foundIndex = deadlines.findIndex(d => d.time === newExecution['deadline']);
+      // deadlines[foundIndex]['status'] = newStatus;
+      newExecution['status'] = newStatus
+
       runQueuePriority.splice(chosenIndex, chosenIndex+1);
       schedule.push(newExecution);
-      
-      // find and update corresponding deadline
-      newStatus = newExecution['start'] + newExecution['executionTime'] <= newExecution['deadline'] ? deadlineStatus[0] : deadlineStatus[1];
-      let foundIndex = deadlines.findIndex(d => d.time === newExecution['deadline']);
-      deadlines[foundIndex]['status'] = newStatus;
 
       // if job still has optional time add it to optional queue
       if (chosenJob['optionalTime'] > 0) {
@@ -370,39 +352,42 @@ let calculateScheduleOptimal = (tasks, duration, powerSchedule, preemptive = tru
       chosenJob = null;
       newExecution = {
         id: 0,
+        release: 0,
         deadline: 0,
         executionTime: 0,
         start: 0,
       }
     } else if (!chosenFromPriority && chosenJob['optionalTime'] <= 0) { // if job was optional and has no optional time left
+      // update deadline status
+      newStatus = newExecution['start'] + newExecution['executionTime'] <= newExecution['deadline'] ? deadlineStatus[0] : deadlineStatus[1];
+      // let foundIndex = deadlines.findIndex(d => d.time === newExecution['deadline']);
+      // deadlines[foundIndex]['status'] = newStatus;
+      newExecution['status'] = newStatus
+
       runQueue.splice(chosenIndex, chosenIndex+1);
       schedule.push(newExecution);
-
-      // find and update corresponding deadline
-      newStatus = newExecution['start'] + newExecution['executionTime'] <= newExecution['deadline'] ? deadlineStatus[0] : deadlineStatus[1];
-      let foundIndex = deadlines.findIndex(d => d.time === newExecution['deadline']);
-      if (!deadlines[foundIndex].hasOwnProperty('status')) {
-        deadlines[foundIndex]['status'] = newStatus;
-      }
 
       chosenJob = null;
       newExecution = {
         id: 0,
+        release: 0,
         deadline: 0,
         executionTime: 0,
         start: 0,
       }
     } else if (i === duration-1 || (power['state'] && power['end'] === i+1)) { // if power loss or end of duration, push execution
-      if (i === duration-1) { // find and update corresponding deadline
+      if (i === duration-1) {
+        // update deadline status
         newStatus = newExecution['start'] + newExecution['executionTime'] <= newExecution['deadline'] ? deadlineStatus[0] : deadlineStatus[1];
-        let foundIndex = deadlines.findIndex(d => d.time === newExecution['deadline']);
-        if (!deadlines[foundIndex].hasOwnProperty('status')) {
-          deadlines[foundIndex]['status'] = newStatus;
-        }
+        // let foundIndex = deadlines.findIndex(d => d.time === newExecution['deadline']);
+        // deadlines[foundIndex]['status'] = newStatus;
+        newExecution['status'] = newStatus
       }
+
       schedule.push(newExecution);
       newExecution = {
         id: chosenJob['id'],
+        release: chosenJob['release'],
         deadline: chosenJob['deadline'],
         executionTime: 0,
         start: -1,
@@ -410,5 +395,5 @@ let calculateScheduleOptimal = (tasks, duration, powerSchedule, preemptive = tru
     }
   }
 
-  return {'tasks': schedule, 'releases': releases, 'deadlines': deadlines };
+  return schedule
 }

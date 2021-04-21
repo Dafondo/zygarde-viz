@@ -6,7 +6,7 @@ var svg = d3.select("#defs")
 
 var defs = svg.append("svg:defs");
 
-let marker = (color) => {
+let marker = (color, d, handleMouseOver, handleMouseOut) => {
   defs.append("svg:marker")
       .attr("id", color.replace("#", ""))
       .attr("viewBox", "0 -5 10 10")
@@ -16,7 +16,10 @@ let marker = (color) => {
       .attr("orient", "auto")
       .append("svg:path")
       .attr("d", "M0,-5L10,0L0,5")
-      .style("fill", d3.color(color).darker(1));
+      .style("fill", d3.color(color).darker(1))
+      .data(d)
+      .on("mouseover", handleMouseOver)
+      .on("mouseout", handleMouseOut);
 
   return "url(" + color + ")";
 }

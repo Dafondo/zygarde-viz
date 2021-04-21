@@ -181,9 +181,14 @@ let isNumeric = (str) => {
         !isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
 }
 
-// get query params and use them to update values
+/**
+ * Here we read in url query params and use them to update the page
+ */
 const urlParams = new URLSearchParams(window.location.search);
 
+/**
+ * Update real time scheduling settings
+ */
 if (urlParams.has(queryParamDict["duration"])) duration = parseInt(urlParams.get(queryParamDict["duration"])); // only update duration if param exists
 document.getElementById("duration").value = duration;
 
@@ -199,6 +204,9 @@ document.getElementById("off-time").value = powerOptions.offTime;
 document.getElementById("start-state").value = powerOptions.startState ? "on" : "off";
 updatePowerForm(null);
 
+/**
+ * Update tasks
+ */
 urlParams.sort(); // sort so we push tasks in the correct order
 let newTasks = [];
 urlParams.forEach((value, key) => {
@@ -207,11 +215,13 @@ urlParams.forEach((value, key) => {
     let newTask = {};
     // TODO error check for values length
     for (let i = 0; i < Math.min(taskFields.length, values.length); i++) {
-      newTask[taskFields[i]] = values[i];
+      newTask[taskFields[i]] = isNumeric(values[i]) ? parseInt(values[i]) : values[i];
     }
     newTasks.push(newTask);
   }
 });
+
+if (newTasks.length > 0) tasks = newTasks;
 
 tasks.forEach((task, i) => {
   // Create new table row and add tasks
@@ -234,6 +244,9 @@ tasks.forEach((task, i) => {
 // only update tasks if query params contain tasks
 if (newTasks.length > 0) tasks = newTasks;
 
+/**
+ * Here we create all of the schedule charts
+ */
 // create the real time chart
 let chartConstantEdf = realTimeChart()
     .title("Constant Power EDF")

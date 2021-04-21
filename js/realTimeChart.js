@@ -4,7 +4,7 @@ function realTimeChart() {
   var version = "0.1.0",
       datum, data,
       svgWidth = 700, svgHeight = 300,
-      margin = { top: 20, bottom: 20, left: 50, right: 30, topNav: 10, bottomNav: 20 },
+      margin = { top: 20, bottom: 20, left: 50, right: 150, topNav: 10, bottomNav: 20 },
       dimension = { chartTitle: 20, xAxis: 20, yAxis: 20, xTitle: 20, yTitle: 20, navChart: 70 },
       categories = ["jobs", "power"],
       tasks = [
@@ -108,7 +108,7 @@ function realTimeChart() {
       .append("g");
 
     var powerG = main.append("g")
-        .attr("class", "jobsGroup")
+        .attr("class", "powerGroup")
         .attr("transform", "translate(0, 0)")
         .attr("clip-path", "url(#myClip)")
       .append("g");
@@ -127,12 +127,12 @@ function realTimeChart() {
 
     // add group for x axis
     var xAxisG = main.append("g")
-        .attr("class", "x axis")
+        .attr("class", "x-axis")
         .attr("transform", "translate(0," + height + ")");
 
     // add group for y axis
     var yAxisG = main.append("g")
-        .attr("class", "y axis");
+        .attr("class", "y-axis");
 
     // in x axis group, add x axis title
     xAxisG.append("text")
@@ -302,23 +302,104 @@ function realTimeChart() {
       powerSchedule = generatePowerScheduleConstant(duration);
     }
 
-    let schedule = null;
+    let data = null;
     if (scheduleOptions.mode === 'edf') {
-      schedule = calculateScheduleEdf(tasks, duration, powerSchedule, scheduleOptions.preemptive);
+      data = calculateScheduleEdf(tasks, duration, powerSchedule, scheduleOptions.preemptive);
     } else if (scheduleOptions.mode === 'optimal') {
-      schedule = calculateScheduleOptimal(tasks, duration, powerSchedule);
+      data = calculateScheduleOptimal(tasks, duration, powerSchedule);
     }
 
-    let taskSchedule = schedule.tasks;
-    let releases = schedule.releases;
-    let deadlines = schedule.deadlines;
+    // Deduplicate jobs for release and deadline rendering
+    let releaseDeadlineData = data.filter((entry, index, self) =>
+      index === self.findIndex((e) => (
+        e.id === entry.id && e.release === entry.release && e.deadline === entry.deadline
+      ))
+    )
 
-    let data = taskSchedule;
-
+    console.log(releaseDeadlineData);
     
-    // update display
+    // update display, not sure why but have to call twice on refresh
     refresh();
     refresh();
+
+    let tooltip = main.append("g")
+      .attr("id", "infobox")
+      .attr("class", "infobox")
+      .attr("transform", "translate(" + (width+10) + "," + height/2 + ")")
+      .style("opacity", 1);
+
+    // On mouse over, show corresponding jobs/releases/deadlines, and hide others
+    function handleMouseOver(event, d) {
+      let target = d3.select(this);
+      let data = target.data()[0];
+      let id = data.id;
+      let release = data.release;
+      let deadline = data.deadline;
+      let tooltipText = `id: ${id}\nrelease: ${release}\ndeadline: ${deadline}\nexecution time: ${data.executionTime}\nstatus: ${data.status}`
+
+      jobsG.selectAll(".job").transition()
+        .duration("100")
+        .style("opacity", function(d) { 
+          if (d.id === id && d.release === release && d.deadline === deadline) return 1;
+          return 0.2
+        });
+
+      releasesG.selectAll(".release").transition()
+        .duration("100")
+        .style("opacity", function(d) { 
+          if (d.id === id && d.release === release && d.deadline === deadline) return 1;
+          return 0.2
+        });
+
+      deadlinesG.selectAll(".deadline").transition()
+        .duration("100")
+        .style("opacity", function(d) { 
+          if (d.id === id && d.release === release && d.deadline === deadline) return 1;
+          return 0.2
+        });
+
+      tooltip.transition()
+        .duration("100")
+        .style("opacity", 1);
+
+      tooltip.append("text")
+        .attr("dy", "0em")
+        .text(`id: ${id}`);
+      tooltip.append("text")
+        .attr("dy", "2em")
+        .text(`release: ${release}`);
+      tooltip.append("text")
+        .attr("dy", "4em")
+        .text(`deadline: ${deadline}`);
+      tooltip.append("text")
+        .attr("dy", "6em")
+        .text(`execution time: ${data.executionTime}`);
+      tooltip.append("text")
+        .attr("dy", "8em")
+        .text(`status: ${data.status}`);
+
+    }
+
+    // On mouse out, restore opacity to all jobs/releases/deadlines
+    function handleMouseOut(event, d) {
+      jobsG.selectAll(".job").transition()
+        .duration("100")
+        .style("opacity", 1);
+
+      releasesG.selectAll(".release").transition()
+        .duration("100")
+        .style("opacity", 1);
+
+      deadlinesG.selectAll(".deadline").transition()
+        .duration("100")
+        .style("opacity", 1);
+      
+      tooltip.transition()
+        .duration("100")
+        .style("opacity", 0);
+
+      tooltip.selectAll('*').remove();
+    }
 
     // function to refresh the viz upon changes of the time domain 
     // (which happens constantly), or after arrival of new data,
@@ -370,7 +451,9 @@ function realTimeChart() {
           })
           // .style("stroke-width", "1px")
           // .style("stroke-opacity", 0.5)
-          .style("fill-opacity", 1);
+          .style("fill-opacity", 1)
+          .on("mouseover", handleMouseOver)
+          .on("mouseout", handleMouseOut);
 
       var powerSel = powerG.selectAll(".power")
                           .data(powerSchedule);
@@ -397,7 +480,7 @@ function realTimeChart() {
         .style("stroke", "none");
           
       var releasesSel = releasesG.selectAll(".release")
-                              .data(releases)
+                              .data(releaseDeadlineData)
       
       // remove items
       releasesSel.exit().remove();
@@ -411,16 +494,18 @@ function realTimeChart() {
           .attr("shape-rendering", "crispEdges");
       
       releasesSel
-          .attr("x1", function(d) { return x(d.time); })
+          .attr("x1", function(d) { return x(d.release); })
           .attr("y1", height)
-          .attr("x2", function(d) { return x(d.time); })
+          .attr("x2", function(d) { return x(d.release); })
           .attr("y2", height - height/categories.length + 10)          
-          .attr("stroke-width", 2)
+          .attr("stroke-width", 3)
           .attr("stroke", function(d) { return d3.color(tasks[d.id].color).darker(1) })
-          .attr("marker-end", function(d) { return marker(tasks[d.id].color) });
+          .attr("marker-end", function(d) { return marker(tasks[d.id].color, d, handleMouseOver, handleMouseOut) })
+          .on("mouseover", handleMouseOver)
+          .on("mouseout", handleMouseOut);
 
       var deadlinesSel = deadlinesG.selectAll(".deadline")
-                              .data(deadlines)
+                              .data(releaseDeadlineData)
 
       // remove items
       deadlinesSel.exit().remove();
@@ -434,28 +519,30 @@ function realTimeChart() {
           .attr("shape-rendering", "crispEdges");
 
       deadlinesSel
-          .attr("x1", function(d) { return x(d.time); })
+          .attr("x1", function(d) { return x(d.deadline); })
           .attr("y1", height - height/categories.length + 10)
-          .attr("x2", function(d) { return x(d.time); })
+          .attr("x2", function(d) { return x(d.deadline); })
           .attr("y2", height)
-          .attr("stroke-width", 2)
+          .attr("stroke-width", 3)
           .attr("stroke", function(d) { return d3.color(tasks[d.id].color).darker(1) })
-          .attr("marker-mid", "url(#fail-marker)"
-          // function(d) {
-          //   if (d.status === deadlineStatus[1]) {
-          //     return "url(#fail-marker)";
-          //   }
-          //   return "";
-          // }
-          )
+          // .attr("marker-mid", "url(#fail-marker)"
+          // // function(d) {
+          // //   if (d.status === deadlineStatus[1]) {
+          // //     return "url(#fail-marker)";
+          // //   }
+          // //   return "";
+          // // }
+          // )
           .attr("marker-end",
             function(d) {
               if (d.status === deadlineStatus[1]) {
                 return "url(#fail-marker)";
               }
-              return marker(tasks[d.id].color);
+              return marker(tasks[d.id].color, d, handleMouseOver, handleMouseOut);
             }
-          );
+          )
+          .on("mouseover", handleMouseOver)
+          .on("mouseout", handleMouseOut);
 
       // // also, bind data to nav chart
       // // first remove current paths
