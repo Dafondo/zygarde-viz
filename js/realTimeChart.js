@@ -1,7 +1,6 @@
 'use strict';
 
 function realTimeChart() {
-
   var version = "0.1.0",
       datum, data,
       svgWidth = 700, svgHeight = 300,
@@ -32,7 +31,7 @@ function realTimeChart() {
       maxY = 100, minY = 0,
       chartTitle, yTitle, xTitle,
       drawXAxis = true, drawYAxis = true, drawNavChart = true,
-      border,
+      border = false,
       selection,
       powerId = 0,
       jobId = 0,
@@ -359,7 +358,7 @@ function realTimeChart() {
       jobsSel
           .attr("x", function(d) { return x(d.start); })
           .attr("y", height - height/categories.length + 20)
-          .attr("width", function(d) { return x(d.start + d.executionTime - d.start); })
+          .attr("width", function(d) { return x(d.start + d.executionTime) - x(d.start); })
           .attr("height", height/categories.length)
           .attr("stroke", 'black')
           .style("fill", function(d) { 
@@ -391,7 +390,7 @@ function realTimeChart() {
       powerSel
         .attr("x", function(d) { return x(d.start); })
         .attr("y", 20)
-        .attr("width", function(d) { return x(d.end - d.start); })
+        .attr("width", function(d) { return x(d.end) - x(d.start); })
         .attr("height", height/categories.length-20)
         .style("fill", "orange")
         .style("fill-opacity", function(d) { return d.state ? 1 : 0; })
@@ -502,16 +501,7 @@ function realTimeChart() {
     scheduleOptions = _;
     return chart;
   }
-
-  // new data item (this most recent item will appear 
-  // on the right side of the chart, and begin moving left)
-  chart.datum = function(_) {
-    if (arguments.length == 0) return datum;
-    datum = _;
-    data.push(datum);
-    return chart;
-  }
-
+  
   // svg width
   chart.width = function(_) {
     if (arguments.length == 0) return svgWidth;

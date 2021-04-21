@@ -1,3 +1,11 @@
 .striped {
   mask: url(#mask-stripe)
 }
+
+.threshold-line {
+  cursor: pointer;
+}
+/* 
+.data-area {
+  fill: lightsteelblue;
+} */

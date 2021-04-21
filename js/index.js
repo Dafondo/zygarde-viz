@@ -199,8 +199,6 @@ document.getElementById("off-time").value = powerOptions.offTime;
 document.getElementById("start-state").value = powerOptions.startState ? "on" : "off";
 updatePowerForm(null);
 
-console.log(powerOptions);
-
 urlParams.sort(); // sort so we push tasks in the correct order
 let newTasks = [];
 urlParams.forEach((value, key) => {
@@ -217,7 +215,7 @@ urlParams.forEach((value, key) => {
 
 tasks.forEach((task, i) => {
   // Create new table row and add tasks
-  let newRow = document.getElementById("task-table").insertRow();
+  let newRow = document.getElementById("task-table-body").insertRow();
   newRow.insertCell().innerText = i;
 
   for (const [key, value] of Object.entries(task)) {
@@ -241,7 +239,7 @@ let chartConstantEdf = realTimeChart()
     .title("Constant Power EDF")
     .yTitle("Y Scale")
     .xTitle("X Scale")
-    .border(true)
+    .border(false)
     .width(1000)
     .height(250)
     .duration(duration)
@@ -259,7 +257,7 @@ let chartInterEdf = realTimeChart()
     .title("Intermittent Power EDF")
     .yTitle("Y Scale")
     .xTitle("X Scale")
-    .border(true)
+    .border(false)
     .width(1000)
     .height(250)
     .duration(duration)
@@ -275,7 +273,7 @@ let chartInterOptimal = realTimeChart()
     .title("Intermittent Power Optimal")
     .yTitle("Y Scale")
     .xTitle("X Scale")
-    .border(true)
+    .border(false)
     .width(1000)
     .height(250)
     .duration(duration)
