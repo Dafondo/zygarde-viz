@@ -5,8 +5,6 @@ let filename = "data/Meyer_2016.csv"
 createEnergyCharts(filename, 0)
 
 function createEnergyCharts(filename, row) {
-  d3.select("#energy-chart").selectAll("*").remove();
-  d3.select("#hn-chart").selectAll("*").remove();
   d3.csv(filename)
   .then(function(data) {
     // set the dimensions and margins of the graph
@@ -155,6 +153,7 @@ function createEnergyCharts(filename, row) {
         .fill(true)
         ;
 
+      d3.select("#hn-chart").selectAll("*").remove();
       d3.select("#hn-chart").append("div")
         .attr("id", "chart-hn")
         .call(hnChart);  
@@ -254,6 +253,7 @@ function createEnergyCharts(filename, row) {
       .computeActivation(computeActivation)
       ;
 
+    d3.select("#energy-chart").selectAll("*").remove();
     d3.select("#energy-chart").append("div")
       .attr("id", "chart-energy-threshold")
       .call(thresholdChart);
