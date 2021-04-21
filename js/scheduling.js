@@ -227,6 +227,20 @@ let calculateScheduleEdf = (tasks, duration, powerSchedule, preemptive = true) =
     }
   }
 
+  // find interrupted jobs and optional jobs and update their status
+  for (let i = 0; i < schedule.length; i++) {
+    let job = schedule[i];
+    if (job.hasOwnProperty('status')) continue; // skip if status is already defined
+    for (let j = 0; j < schedule.length; j++) {
+      let other = schedule[j];
+      // match other job and update, then break to move to next job
+      if (job['id'] === other['id'] && job['release'] === other['release'] && job['deadline'] === other['deadline'] && other.hasOwnProperty('status')) {
+        job['status'] = other['status'];
+        break;
+      }
+    }
+  }
+
   return schedule;
 }
 
@@ -359,10 +373,10 @@ let calculateScheduleOptimal = (tasks, duration, powerSchedule, preemptive = tru
       }
     } else if (!chosenFromPriority && chosenJob['optionalTime'] <= 0) { // if job was optional and has no optional time left
       // update deadline status
-      newStatus = newExecution['start'] + newExecution['executionTime'] <= newExecution['deadline'] ? deadlineStatus[0] : deadlineStatus[1];
+      // newStatus = newExecution['start'] + newExecution['executionTime'] <= newExecution['deadline'] ? deadlineStatus[0] : deadlineStatus[1];
       // let foundIndex = deadlines.findIndex(d => d.time === newExecution['deadline']);
       // deadlines[foundIndex]['status'] = newStatus;
-      newExecution['status'] = newStatus
+      // newExecution['status'] = newStatus
 
       runQueue.splice(chosenIndex, chosenIndex+1);
       schedule.push(newExecution);
@@ -391,6 +405,20 @@ let calculateScheduleOptimal = (tasks, duration, powerSchedule, preemptive = tru
         deadline: chosenJob['deadline'],
         executionTime: 0,
         start: -1,
+      }
+    }
+  }
+
+  // find interrupted jobs and optional jobs and update their status
+  for (let i = 0; i < schedule.length; i++) {
+    let job = schedule[i];
+    if (job.hasOwnProperty('status')) continue; // skip if status is already defined
+    for (let j = 0; j < schedule.length; j++) {
+      let other = schedule[j];
+      // match other job and update, then break to move to next job
+      if (job['id'] === other['id'] && job['release'] === other['release'] && job['deadline'] === other['deadline'] && other.hasOwnProperty('status')) {
+        job['status'] = other['status'];
+        break;
       }
     }
   }
